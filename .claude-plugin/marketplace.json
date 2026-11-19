@@ -1,0 +1,14 @@
+{
+  "name": "testgate",
+  "description": "Never close a session on a red build",
+  "owner": { "name": "varun642002" },
+  "plugins": [
+    {
+      "name": "testgate",
+      "description": "Never close a session on a red build. Runs your project's own type check and tests when a session that edited files ends, and reports the failure while you can still act on it.",
+      "version": "1.0.0",
+      "source": "./",
+      "license": "MIT"
+    }
+  ]
+}
