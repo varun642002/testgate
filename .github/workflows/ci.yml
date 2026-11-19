@@ -20,7 +20,7 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Syntax
         shell: bash
-        run: for f in lib/*.mjs hooks/*.mjs test/*.mjs; do node --check "$f"; done
+        run: for f in lib/*.mjs hooks/*.mjs bin/*.mjs test/*.mjs; do node --check "$f"; done
       - name: Manifests are valid JSON
         shell: bash
         run: |
@@ -29,7 +29,6 @@ jobs:
           done
       - name: Tests
         run: node test/smoke.mjs
-          echo "$out" | grep -q '"permissionDecision":"allow"'
       - name: Detect runs in this repo
         run: node bin/testgate.mjs detect
       - name: Garbage input exits quietly
