@@ -57,7 +57,7 @@ claude plugin install testgate@testgate
 See what it would run in your project, before trusting it:
 
 ```bash
-npx @varun642002/testgate detect
+npx github:varun642002/testgate detect
 ```
 
 ```text
