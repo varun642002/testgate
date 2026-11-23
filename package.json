@@ -1,17 +1,44 @@
 {
   "name": "@varun642002/testgate",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Never close a Claude Code session on a red build. A Stop hook that runs your project's own type check and tests after a session that edited files.",
   "type": "module",
   "license": "MIT",
   "author": "varun642002",
-  "bin": { "testgate": "bin/testgate.mjs" },
+  "bin": {
+    "testgate": "bin/testgate.mjs"
+  },
   "homepage": "https://github.com/varun642002/testgate",
-  "repository": { "type": "git", "url": "https://github.com/varun642002/testgate.git" },
-  "bugs": { "url": "https://github.com/varun642002/testgate/issues" },
-  "engines": { "node": ">=18" },
-  "scripts": { "test": "node test/smoke.mjs" },
-  "keywords": ["claude", "claude-code", "tests", "hooks", "ci", "quality", "plugin", "typecheck"],
-  "files": ["bin", "lib", "hooks", ".claude-plugin", "README.md", "LICENSE"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/varun642002/testgate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/varun642002/testgate/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node test/smoke.mjs"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "tests",
+    "hooks",
+    "ci",
+    "quality",
+    "plugin",
+    "typecheck"
+  ],
+  "files": [
+    "bin",
+    "lib",
+    "hooks",
+    ".claude-plugin",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {}
 }

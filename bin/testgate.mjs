@@ -42,7 +42,7 @@ if (cmd === "detect") {
 const results = [];
 for (const c of checks) {
   process.stderr.write(`  running ${c.name}…\n`);
-  const r = runCheck(c, { cwd, timeoutMs: config.timeoutMs || 180_000 });
+  const r = runCheck(c, { cwd, timeoutMs: config.timeoutMs });
   results.push(r);
   if (!r.ok) break;
 }

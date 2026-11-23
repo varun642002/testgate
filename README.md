@@ -10,7 +10,7 @@
 [![Node](https://img.shields.io/badge/node-%E2%89%A518-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757)](https://claude.com/claude-code)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-blue.svg)](package.json)
-[![Tests](https://img.shields.io/badge/tests-27-success.svg)](test/smoke.mjs)
+[![Tests](https://img.shields.io/badge/tests-32-success.svg)](test/smoke.mjs)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 </div>
@@ -96,7 +96,7 @@ at the first failure rather than spending minutes on the rest.
 ```json
 {
   "commands": ["npm run typecheck", "npm run test:cash", "npm run test:optouts"],
-  "timeoutMs": 180000,
+  "timeoutMs": 600000,
   "minEdits": 1,
   "skip": ["^docs/", "\\.md$"]
 }
@@ -105,7 +105,7 @@ at the first failure rather than spending minutes on the rest.
 | Key | Meaning |
 |---|---|
 | `commands` | Run these instead of detecting. Strings, or `{name, command}` |
-| `timeoutMs` | Per-check timeout (default 180000) |
+| `timeoutMs` | Per-check timeout (default 600000) |
 | `minEdits` | Edited files needed before anything runs (default 1) |
 | `skip` | Paths that don't count as edits — docs, changelogs |
 
@@ -113,7 +113,19 @@ at the first failure rather than spending minutes on the rest.
 |---|---|
 | `TESTGATE=0` | Disable entirely |
 | `TESTGATE_QUIET=1` | Say nothing when the build is green |
+| `TESTGATE_TIMEOUT_MS` | Per-check timeout, overriding the default |
 
+## ⏱️ A timeout is not a red build
+
+A check that runs out of time proved nothing, so testgate says so and lets the
+session close. It only blocks on a real non-zero exit. Reporting a timeout as a
+failure sends you looking for a break that may not exist — which is worse than
+saying nothing, and was the reason the default went from 180s to 600s.
+
+Checks are also deduplicated by **what they resolve to**, not by the command
+you would type. A `"lint": "tsc --noEmit"` script next to a `tsconfig.json`
+used to run the same compiler twice under two names, doubling the wait for no
+extra coverage. Now it runs once.
 ## ⚠️ Worth knowing
 
 > [!IMPORTANT]

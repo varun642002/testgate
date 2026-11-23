@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { detectChecks, loadConfig, editedFiles } from "../lib/detect.mjs";
+import { detectChecks, loadConfig, editedFiles, normaliseCommand } from "../lib/detect.mjs";
 import { runCheck, formatReport, summariseOutput } from "../lib/run.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -201,7 +201,11 @@ const runHook = (payload, env = {}) =>
   execFileSync(process.execPath, [HOOK], {
     input: JSON.stringify(payload),
     encoding: "utf8",
-    env: { ...process.env, ...env },
+    // TESTGATE_CHILD is set in every command testgate runs, so when testgate
+    // checks its own repo the marker reaches this suite and the hook under
+    // test exits at once, failing the blocking tests for a reason that has
+    // nothing to do with the hook. Clear it unless a test sets it itself.
+    env: { ...process.env, TESTGATE_CHILD: "", ...env },
   });
 
 const green = proj("green", {
@@ -255,6 +259,50 @@ check("a project with no checks stays quiet", () => {
   eq(runHook({ cwd: none, transcript_path: transcript }).trim(), "", "nothing to run");
 });
 
+// --- added with the dedupe and timeout changes ---
+
+check("a lint script holding the same command as the tsc fallback runs once", () => {
+  // The tsc fallback is added before lint is considered, so it is the one
+  // that survives. Which of the two names wins does not matter; running the
+  // same compiler twice does.
+  const d = proj("dup-lint", {
+    "package.json": JSON.stringify({ scripts: { lint: "tsc --noEmit" } }),
+    "tsconfig.json": "{}",
+  });
+  const names = detectChecks(d).map((c) => c.name);
+  eq(names, ["tsc"], "tsc --noEmit must not be run twice under two names");
+});
+
+check("a lint script doing something else is still its own check", () => {
+  const d = proj("real-lint", {
+    "package.json": JSON.stringify({ scripts: { lint: "eslint ." } }),
+    "tsconfig.json": "{}",
+  });
+  eq(detectChecks(d).map((c) => c.name), ["tsc", "lint"], "a genuine second check survives");
+});
+
+check("normaliseCommand sees through npx and spacing", () => {
+  eq(normaliseCommand("npx  tsc   --noEmit"), normaliseCommand("tsc --noemit"), "same command");
+  ok(normaliseCommand("eslint .") !== normaliseCommand("tsc --noEmit"), "different commands");
+});
+
+check("a timeout is not reported as a failing build", () => {
+  const r = runCheck({ name: "slow", command: "node -e \"setTimeout(()=>{},5000)\"" }, { cwd: root, timeoutMs: 300 });
+  ok(r.timedOut, "precondition: it timed out");
+  const report = formatReport([r], { edited: 1 });
+  ok(!report.includes("FAILING"), "must not call an unfinished check a failure");
+  ok(report.includes("not a failure"), "must say so plainly");
+  ok(/unknown/.test(report), "must say the result is unknown");
+});
+
+check("a timing-out check does not block the session", () => {
+  const slow = proj("slow", {
+    "package.json": JSON.stringify({ scripts: { test: "node -e \"setTimeout(()=>{},5000)\"" } }),
+    ".testgate.json": JSON.stringify({ timeoutMs: 300 }),
+  });
+  const out = runHook({ cwd: slow, transcript_path: transcript, session_id: "s" });
+  eq(out.trim(), "", "a timeout must not emit a block decision");
+});
 // Best-effort cleanup. On Windows a child process from the timeout test can
 // still hold a handle, and rmSync throws EPERM — which must not fail the run
 // or hide the results.

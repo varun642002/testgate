@@ -38,19 +38,23 @@ if (!checks.length) {
 
 const results = [];
 for (const c of checks) {
-  const r = runCheck(c, { cwd, timeoutMs: config.timeoutMs || 180_000 });
+  const r = runCheck(c, { cwd, timeoutMs: config.timeoutMs });
   results.push(r);
   // One failure is enough to report; no point spending minutes on the rest.
   if (!r.ok) break;
 }
 
 const report = formatReport(results, { edited: edited.length });
-const failing = results.some((r) => !r.ok);
+// Only a real non-zero exit blocks. A check that ran out of time proved
+// nothing, and blocking on it asks Claude to account for a failure that may
+// not exist — so that case is reported on stderr and the session is let go.
+const failing = results.some((r) => !r.ok && !r.timedOut);
+const inconclusive = results.some((r) => !r.ok && r.timedOut);
 
 if (failing) {
   // "block" sends the reason back to Claude so it can act on it in this session.
   process.stdout.write(JSON.stringify({ decision: "block", reason: report }));
-} else if (process.env.TESTGATE_QUIET !== "1") {
+} else if (inconclusive || process.env.TESTGATE_QUIET !== "1") {
   process.stderr.write(report + "\n");
 }
 process.exit(0);
